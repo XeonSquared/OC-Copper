@@ -8,8 +8,7 @@ They are simply base low-level Copper nodes with two interfaces and the
 
  For the FROM address:
 
-If it's on the parent side, reject if it's prefixed with hostname .. 
-"/",
+If it's on the parent side, reject if it's prefixed with hostname .. "/",
  otherwise prefix it with "<" and forward to child side.
 If it's on the child side, reject if it's prefixed with "<",
  otherwise prefix it with hostname .. "/" and forward to parent side.

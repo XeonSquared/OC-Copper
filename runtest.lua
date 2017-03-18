@@ -7,7 +7,7 @@ local nodenames = {}
 
 local systime = 0
 local function getsystime()
-	return systime / 20
+	return systime / 10
 end
 
 local queuedCalls = {}
@@ -58,13 +58,24 @@ end)
 
 -- Start testing
 
+local targetables = {}
+local targetableCount = 10
+for i = 1, targetableCount do
+	targetables[i] = math.random(#nodes)
+end
+
 local function generateMessage()
-	local na = math.random(#nodes)
-	local nb = math.random(#nodes)
+	local na = 1
+	local nb = 1
+	while na == nb do
+		na = targetables[math.random(#targetables)]
+		nb = targetables[math.random(#targetables)]
+	end
 	nodes[na].output(nodenames[na], nodenames[nb], "T" .. tostring(math.random()))
 end
 
-local generateEvery = 1
+-- ~Once every 5 seconds, think a polling script
+local generateEvery = math.floor(50 / targetableCount)
 local generateCount = 10000
 while (generateCount > 0) or (#queuedCalls > 0) do
 	if (systime % generateEvery) == 0 then
@@ -81,8 +92,8 @@ while (generateCount > 0) or (#queuedCalls > 0) do
 	for _, v in ipairs(qc) do
 		v()
 	end
-	print("run iteration, " .. #qc .. " calls")
+	--print("run iteration, " .. #qc .. " calls")
 	systime = systime + 1
 end
 
-print(statSD, statPT)
+print(#nodes, statSD, statPT)

@@ -26,18 +26,18 @@ return function (hostname, transmit, onReceive, time)
 
 	-- How many packets need to be stored in seenBefore's keyspace
 	--  before 'panic' is the best response?
-	local tuningMaxSeenBeforeCountBeforeEmergencyFlush = 0x100
+	local tuningMaxSeenBeforeCountBeforeEmergencyFlush = 0x300
 
 	-- Expect a response by this many seconds,
 	-- or else clear the known receivers cache and resend.
-	local tuningExpectResponse = 10
+	local tuningExpectResponse = 120
 
 	-- Flush the loop detector every so often.
 	-- This is not a complete clear.
-	local tuningFlushLoopDetector = 10
+	local tuningFlushLoopDetector = 120
 
-	-- Do not change this value. I mean it. Don't. Just. Don't.
-	local tuningAutorejectLen = 4000
+	-- Do not change this value unless protocol has changed accordingly.
+	local tuningAutorejectLen = 1506
 
 	local loopDetectorNext = time() + tuningFlushLoopDetector
 
@@ -68,10 +68,11 @@ return function (hostname, transmit, onReceive, time)
 					seenBeforeCount = seenBeforeCount - 1
 				end
 			end
-			loopDetectorNext = time() + tuningFlushLoopDetector
+			loopDetectorNext = t + tuningFlushLoopDetector
 		end
 		for k, v in pairs(lastKnownReceiver) do
 			if t >= v[2] then
+				print("It was decided LKV[" .. k .. "] was out of date @ " .. v[2])
 				lastKnownReceiver[k] = nil
 				for _, m in ipairs(v[3]) do
 					transmit(nil, m)
@@ -86,14 +87,16 @@ return function (hostname, transmit, onReceive, time)
 	culib.hostname = hostname
 	culib.input = function (node, message)
 		local t = time()
-		if message:len() > tuningAutorejectLen then
-			return
-		end
+
+		-- Eliminate the hops value first of all.
+		local hops = message:byte(1)
+		message = message:sub(2)
+
 		if seenBefore[message] then
 			seenBefore[message] = seenBefore[message] + 1
 			return
 		else
-			seenBefore[message] = 0
+			seenBefore[message] = 2
 			seenBeforeCount = seenBeforeCount + 1
 			if seenBeforeCount > tuningMaxSeenBeforeCountBeforeEmergencyFlush then
 				-- Panic
@@ -101,7 +104,8 @@ return function (hostname, transmit, onReceive, time)
 				seenBefore = {}
 			end
 		end
-		-- Begin parsing
+		-- Begin parsing.
+
 		local rawmessage = message
 
 		if message:len() < 2 then return end
@@ -114,12 +118,34 @@ return function (hostname, transmit, onReceive, time)
 		local tnam = message:sub(2, nlen + 1)
 		message = message:sub(nlen + 2)
 
-		lastKnownReceiver[fnam] = {node, t + tuningExpectResponse, {}}
+		if message:len() > tuningAutorejectLen then
+			return
+		end
+
+		local restart = true
+		if lastKnownReceiver[fnam] then
+			if lastKnownReceiver[fnam][1] == node then
+				restart = false
+				-- allow frequently-used links to last longer
+				lastKnownReceiver[fnam][2] = lastKnownReceiver[fnam][2] + tuningExpectResponse
+				lastKnownReceiver[fnam][3] = {}
+			end
+		else
+		end
+		if restart then
+			lastKnownReceiver[fnam] = {node, t + tuningExpectResponse, {}}
+		end
 		
 		onReceive(fnam, tnam, message)
 		if culib.hostname == tnam then return end
 
 		-- Redistribution of messages not aimed here
+		if hops == 255 then
+			return
+		else
+			rawmessage = string.char(hops + 1) .. rawmessage
+		end
+
 		local lkr = lastKnownReceiver[tnam]
 		if lkr then
 			transmit(lkr[1], rawmessage)
@@ -137,7 +163,7 @@ return function (hostname, transmit, onReceive, time)
 	culib.output = function (fnam, tnam, message)
 		onReceive(fnam, tnam, message)
 		if tnam == culib.hostname then return end
-		local m = encodeName(fnam) .. encodeName(tnam) .. message
+		local m = "\x00" .. encodeName(fnam) .. encodeName(tnam) .. message
 		transmit(nil, m)
 	end
 	return culib

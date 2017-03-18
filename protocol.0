@@ -15,14 +15,15 @@ Copper addresses are names.
 In the context of a system not implementing a hierarchial gateway,
  this is as much about Copper addressing as matters.
 
-Copper base packets contain 3 fields.
+Copper base packets contain 4 fields.
+One byte indicating how many nodes have retransmitted the message
+ (the original sender should use 0),
 A name (as a length-minus-1-byte-prefixed-string),
  another name (in the same format),
  and the rest is data.
 
-Copper packets may be up to 4000 bytes long, including base.
-(It's assumed the additional 96 bytes will be useful for any additional 
- framing, assuming a 4K packet limit.)
+Copper packet data may be up to 1506 bytes long -
+ this does not include header data, which may be up to (256*2) + 3 bytes long.
 
 Loop detection should performed by checking if a packet exactly the same has 
  been seen recently - other rejection, alteration and routing measures 
@@ -36,4 +37,4 @@ Should a situation be dire enough,
  hierarchial networks (described in file 2, 'protocol.1'),
  and custom routing software in general,
  can be used to split networks however the system requires.
-Copper isn't very picky.
+

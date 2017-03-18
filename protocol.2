@@ -17,15 +17,14 @@ All implementations of Copper that synthesize their own packets SHOULD
  follow this protocol when doing so, unless they are a custom system 
  that will not be connected to any global network.
 
-
 Firstly, note that, to the application, a Reliability Layer packet can 
- be up to 59,895 bytes in size, though a fragment can only be up to 3993 bytes.
+ be up to 22,500 bytes in size, though a fragment can only be up to 1500 bytes.
 
 Secondly, note that an application should be able to ask to be notified 
  when a packet is received successfully or when the implementation gives up,
  with a flag indicating which is which.
 
-Reliability Layer packets have a simple format.
+Reliability Layer packets have a simple 6-byte header.
 The first two bytes are the port number, in big-endian format.
 The next three bytes are a number to this application-side packet.
 They should be as random as possible.
