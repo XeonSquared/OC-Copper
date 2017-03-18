@@ -28,13 +28,15 @@ return function (hostname, transmit, onReceive, time)
 	--  before 'panic' is the best response?
 	local tuningMaxSeenBeforeCountBeforeEmergencyFlush = 0x300
 
-	-- Expect a response by this many seconds,
-	-- or else clear the known receivers cache and resend.
-	local tuningExpectResponse = 120
+	-- Expect another packet after this amount of time,
+	--  or else clear the known receivers cache entry.
+	local tuningExpectContinue = 600 + math.random(1200)
 
 	-- Flush the loop detector every so often.
 	-- This is not a complete clear.
-	local tuningFlushLoopDetector = 120
+	local tuningFlushLoopDetector = 60
+
+	local tuningRandomPathwarming = 0.1
 
 	-- Do not change this value unless protocol has changed accordingly.
 	local tuningAutorejectLen = 1506
@@ -50,11 +52,16 @@ return function (hostname, transmit, onReceive, time)
 	local seenBeforeCount = 0
 
 	-- [address] = {
-	--      node,
-	--      expiry,
-	--      broadcastOnExpire
+	--      node, -- the node that a message was received from
+	--      expiry
 	-- }
 	local lastKnownReceiver = {}
+
+	local function encodeName(name)
+		if name:len() > 256 then error("Bad name (l>256)") end
+		if name == "" then error("No name") end
+		return string.char(name:len() - 1) .. name
+	end
 
 	local function refresh()
 		local t = time()
@@ -72,11 +79,12 @@ return function (hostname, transmit, onReceive, time)
 		end
 		for k, v in pairs(lastKnownReceiver) do
 			if t >= v[2] then
-				print("It was decided LKV[" .. k .. "] was out of date @ " .. v[2])
-				lastKnownReceiver[k] = nil
-				for _, m in ipairs(v[3]) do
-					transmit(nil, m)
+				--print("It was decided LKV[" .. k .. "] was out of date @ " .. v[2] .. " by " .. hostname)
+				-- Keep the transmission path 'warm' with a null packet
+				if math.random() < tuningRandomPathwarming then
+					transmit(nil, "\xFF" .. encodeName(hostname) .. encodeName(k))
 				end
+				lastKnownReceiver[k] = nil
 			end
 		end
 	end
@@ -85,6 +93,11 @@ return function (hostname, transmit, onReceive, time)
 
 	-- Can be changed.
 	culib.hostname = hostname
+
+	-- Stats.
+	culib.lkrCacheMisses = 0
+	culib.lkrCacheHits = 0
+
 	culib.input = function (node, message)
 		local t = time()
 
@@ -122,19 +135,7 @@ return function (hostname, transmit, onReceive, time)
 			return
 		end
 
-		local restart = true
-		if lastKnownReceiver[fnam] then
-			if lastKnownReceiver[fnam][1] == node then
-				restart = false
-				-- allow frequently-used links to last longer
-				lastKnownReceiver[fnam][2] = lastKnownReceiver[fnam][2] + tuningExpectResponse
-				lastKnownReceiver[fnam][3] = {}
-			end
-		else
-		end
-		if restart then
-			lastKnownReceiver[fnam] = {node, t + tuningExpectResponse, {}}
-		end
+		lastKnownReceiver[fnam] = {node, t + tuningExpectContinue}
 		
 		onReceive(fnam, tnam, message)
 		if culib.hostname == tnam then return end
@@ -148,16 +149,12 @@ return function (hostname, transmit, onReceive, time)
 
 		local lkr = lastKnownReceiver[tnam]
 		if lkr then
+			culib.lkrCacheHits = culib.lkrCacheHits + 1
 			transmit(lkr[1], rawmessage)
-			table.insert(lkr[3], rawmessage)
 		else
+			culib.lkrCacheMisses = culib.lkrCacheMisses + 1
 			transmit(nil, rawmessage)
 		end
-	end
-	local function encodeName(name)
-		if name:len() > 256 then error("Bad name (l>256)") end
-		if name == "" then error("No name") end
-		return string.char(name:len() - 1) .. name
 	end
 	culib.refresh = refresh
 	culib.output = function (fnam, tnam, message)

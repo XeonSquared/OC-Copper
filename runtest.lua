@@ -71,6 +71,7 @@ local function generateMessage()
 		na = targetables[math.random(#targetables)]
 		nb = targetables[math.random(#targetables)]
 	end
+	print(nodenames[na], nodenames[nb], getsystime())
 	nodes[na].output(nodenames[na], nodenames[nb], "T" .. tostring(math.random()))
 end
 
@@ -97,3 +98,10 @@ while (generateCount > 0) or (#queuedCalls > 0) do
 end
 
 print(#nodes, statSD, statPT)
+
+local maxMisses, maxHits = 0, 0
+for i = 1, #nodes do
+	maxMisses = math.max(maxMisses, nodes[i].lkrCacheMisses)
+	maxHits = math.max(maxHits, nodes[i].lkrCacheHits)
+end
+print(maxMisses, maxHits)

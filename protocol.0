@@ -38,3 +38,15 @@ Should a situation be dire enough,
  and custom routing software in general,
  can be used to split networks however the system requires.
 
+--- The Broadcast Address
+
+The Broadcast Address is a possible feature which may or may not be actually used.
+For now it is not implemented.
+The idea is that if a name is directly equal to "*", it should be broadcast around the local network.
+
+Hierarchial gateways do not need modification on the from-child rules
+("*" is local to them there, 
+ "<*" or such is dealt with correctly by the normal rules),
+ but in the from-parent rules it may be desirable to forward "*" to child networks.
+
+Or not.
