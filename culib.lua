@@ -1,3 +1,6 @@
+-- I, 20kdc, release this into the public domain.
+-- No warranty is provided, implied or otherwise.
+
 -- 'Copper' networking test implementation.
 -- This is meant as a portable (even into OC) library for networking.
 -- This 'outer function' is the instantiator.
@@ -35,8 +38,6 @@ return function (hostname, transmit, onReceive, time)
 	-- Flush the loop detector every so often.
 	-- This is not a complete clear.
 	local tuningFlushLoopDetector = 60
-
-	local tuningRandomPathwarming = 0.1
 
 	-- Do not change this value unless protocol has changed accordingly.
 	local tuningAutorejectLen = 1506
@@ -80,10 +81,6 @@ return function (hostname, transmit, onReceive, time)
 		for k, v in pairs(lastKnownReceiver) do
 			if t >= v[2] then
 				--print("It was decided LKV[" .. k .. "] was out of date @ " .. v[2] .. " by " .. hostname)
-				-- Keep the transmission path 'warm' with a null packet
-				if math.random() < tuningRandomPathwarming then
-					transmit(nil, "\xFF" .. encodeName(hostname) .. encodeName(k))
-				end
 				lastKnownReceiver[k] = nil
 			end
 		end

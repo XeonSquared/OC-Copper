@@ -1,3 +1,6 @@
+-- I, 20kdc, release this into the public domain.
+-- No warranty is provided, implied or otherwise.
+
 -- Load testnet
 local culib = require("culib")
 
@@ -99,9 +102,9 @@ end
 
 print(#nodes, statSD, statPT)
 
-local maxMisses, maxHits = 0, 0
+local allMisses, allHits = 0, 0
 for i = 1, #nodes do
-	maxMisses = math.max(maxMisses, nodes[i].lkrCacheMisses)
-	maxHits = math.max(maxHits, nodes[i].lkrCacheHits)
+	allMisses = allMisses + nodes[i].lkrCacheMisses
+	allHits = allHits + nodes[i].lkrCacheHits
 end
-print(maxMisses, maxHits)
+print(allMisses, allHits)

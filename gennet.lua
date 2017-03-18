@@ -1,3 +1,5 @@
+-- I, 20kdc, release this into the public domain.
+-- No warranty is provided, implied or otherwise.
 -- Generate connected network where all nodes are connected.
 -- Saves graph to "netref.dot", outputs lua tables to stdout.
 
@@ -8,7 +10,11 @@ local wordsA = {
 	"intriguing",
 	"bright",
 	"solitudial",
-	"nuanced"
+	"nuanced",
+	"confused",
+	"confuzzled",
+	"inspiring",
+	"dark",
 }
 local wordsB = {
 	"fontaine",
@@ -16,7 +22,11 @@ local wordsB = {
 	"poirot",
 	"pinkie",
 	"sparks",
-	"twi"
+	"twi",
+	"edgar",
+	"edith",
+	"author",
+	"entity",
 }
 for i = 1, #wordsA do
 	for j = 1, #wordsB do
