@@ -1,0 +1,93 @@
+Copper Protocol :: Reliability/Fragmentation Layer
+ 20kdc, 2017
+
+The Copper Protocol as described in files 1 and 2 does not have any 
+ semblance of application multiplexing or failure recovery.
+
+This is intentional.
+Assuming that nobody is trying to make the fatal mistake of constructing 
+ a NAT, files 1 and 2 are enough for all routing-related purposes.
+
+For applications, however, a protocol must be layered on top.
+
+This document on the Reliability Layer describes how that should work.
+
+
+All implementations of Copper that synthesize their own packets SHOULD 
+ follow this protocol when doing so, unless they are a custom system 
+ that will not be connected to any global network.
+
+
+Firstly, note that, to the application, a Reliability Layer packet can 
+ be up to 59,895 bytes in size, though a fragment can only be up to 3993 bytes.
+
+Secondly, note that an application should be able to ask to be notified 
+ when a packet is received successfully or when the implementation gives up,
+ with a flag indicating which is which.
+
+Reliability Layer packets have a simple format.
+The first two bytes are the port number, in big-endian format.
+The next three bytes are a number to this application-side packet.
+They should be as random as possible.
+The next byte is the 'attempt number' - the amount of attempts by this 
+ side of the Reliability Layer "connection" to send a packet with this 
+ meaning.
+
+This can be achieved serially or otherwise, but should have a random base.
+Combined with correctly-forgetting packet caches, this should prevent 
+ any packets lost by data collision.
+The final header byte is the actual indicator of what is in the packet.
+
+The upper nibble indicates the amount of fragments in the packet - 0 
+ indicates an acknowledgement.
+The lower nibble indicates which fragment this is, or if this is an 
+ acknowledgement, which fragment was acknowledged.
+
+0x0F indicates that this is a *deliberately* unreliable packet.
+(These packets cannot be fragmented or acknowledged, and thus have the 
+  per-fragment limit of 3993 bytes.
+ The attempt number and primary packet number still have meaning.)
+
+Two example scenarioes will now be presented:
+
+1.
+
+ARCHWAYS sends a 0x10 'First fragment of a one fragment packet' to 
+ IWAKURA on port 8080, twice (the first attempt being dropped).
+ 1F 90 | F4 21 B9 | 00/01    | 10 | (...)
+ port    packetID   Attempt    CC   Data
+
+IWAKURA receives it successfully on the second time, and sends back a 
+ response, three times.
+ 1F 90 | F4 21 B9 | 00/01/02 | 00
+ port    packetID   Attempt    CC
+
+ARCHWAYS receives the response and does not send a third packet.
+
+2.
+
+IWAKURA, having parsed the packet, sends back a long response on the same port.
+The response is two packets long.
+ 1F 90 | 91 19 28 | 00 | 20 | (...)
+ 1F 90 | 91 19 28 | 00 | 21 | (...)
+
+ARCHWAYS receives both packets, in the wrong order
+ (but it reassembles it anyway), and ACKs three times...
+ ...but the packets are dropped due to a crow getting in the way of the 
+ satellite dish at the wrong point. Blasted crow.
+
+ 1F 90 | 91 19 28 | 00/01/02 | 21
+ 1F 90 | 91 19 28 | 00/01/02 | 20
+
+IWAKURA, waiting, say, 6 seconds
+ (assuming ACKs are sent a second and a half apart) sends a retransmission.
+
+ 1F 90 | 91 19 28 | 01 | 20 | (...)
+ 1F 90 | 91 19 28 | 01 | 21 | (...)
+
+ARCHWAYS ACKs the retransmission, just in case - this works.
+
+ 1F 90 | 91 19 28 | 00/01/02 | 21
+ 1F 90 | 91 19 28 | 00/01/02 | 20
+
+IWAKURA's application knows the message got through.

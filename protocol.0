@@ -1,0 +1,39 @@
+Copper Protocol
+ 20kdc, 2017
+
+Copper is a simple to implement networking protocol based on names.
+This is it's sole purpose.
+It can be used in various contexts, though it is not suitable as a 
+ secure peer-to-peer networking protocol where all actors are untrusted.
+
+Rather, Copper is better for the situation of the current internet -
+ hierarchial structures (operated by semi-trusted parties, with 
+ encryption used to hide information from them as appropriate),
+ with arbitary network structure at the fully-trusted-network level.
+
+Copper addresses are names.
+In the context of a system not implementing a hierarchial gateway,
+ this is as much about Copper addressing as matters.
+
+Copper base packets contain 3 fields.
+A name (as a length-minus-1-byte-prefixed-string),
+ another name (in the same format),
+ and the rest is data.
+
+Copper packets may be up to 4000 bytes long, including base.
+(It's assumed the additional 96 bytes will be useful for any additional 
+ framing, assuming a 4K packet limit.)
+
+Loop detection should performed by checking if a packet exactly the same has 
+ been seen recently - other rejection, alteration and routing measures 
+ are up to the implementer.
+
+Signalling is inadvisable - Copper is primarily meant to allow creating 
+ internally "partyline" OpenComputers in-game networks with named nodes
+ and some semblance of routing or structure.
+
+Should a situation be dire enough,
+ hierarchial networks (described in file 2, 'protocol.1'),
+ and custom routing software in general,
+ can be used to split networks however the system requires.
+Copper isn't very picky.
