@@ -30,11 +30,11 @@ return function (hostname, transmit, onReceive, time)
 
 	-- Expect a response by this many seconds,
 	-- or else clear the known receivers cache and resend.
-	local tuningExpectResponse = 20
+	local tuningExpectResponse = 10
 
 	-- Flush the loop detector every so often.
 	-- This is not a complete clear.
-	local tuningFlushLoopDetector = 120
+	local tuningFlushLoopDetector = 10
 
 	-- Do not change this value. I mean it. Don't. Just. Don't.
 	local tuningAutorejectLen = 4000
@@ -49,17 +49,12 @@ return function (hostname, transmit, onReceive, time)
 	local seenBefore = {}
 	local seenBeforeCount = 0
 
-	-- Unacknowledged packets.
-	-- Can cause an earlier cache flush.
-	-- [address] = giveupTime
-	-- (These are just forgotten after a while)
-	--local sentBNR = {}--NYI
-
 	-- [address] = {
 	--      node,
-	--      expiry
+	--      expiry,
+	--      broadcastOnExpire
 	-- }
-	--local lastKnownReceiver = {}--NYI
+	local lastKnownReceiver = {}
 
 	local function refresh()
 		local t = time()
@@ -75,6 +70,14 @@ return function (hostname, transmit, onReceive, time)
 			end
 			loopDetectorNext = time() + tuningFlushLoopDetector
 		end
+		for k, v in pairs(lastKnownReceiver) do
+			if t >= v[2] then
+				lastKnownReceiver[k] = nil
+				for _, m in ipairs(v[3]) do
+					transmit(nil, m)
+				end
+			end
+		end
 	end
 
 	local culib = {}
@@ -82,6 +85,7 @@ return function (hostname, transmit, onReceive, time)
 	-- Can be changed.
 	culib.hostname = hostname
 	culib.input = function (node, message)
+		local t = time()
 		if message:len() > tuningAutorejectLen then
 			return
 		end
@@ -97,24 +101,44 @@ return function (hostname, transmit, onReceive, time)
 				seenBefore = {}
 			end
 		end
+		-- Begin parsing
+		local rawmessage = message
+
 		if message:len() < 2 then return end
 		local nlen = message:byte(1) + 1
-		local fnam = message:sub(1, nlen)
-		message = message:sub(nlen + 1)
+		local fnam = message:sub(2, nlen + 1)
+		message = message:sub(nlen + 2)
+
 		if message:len() < 2 then return end
 		local nlen = message:byte(1) + 1
-		local tnam = message:sub(1, nlen)
-		message = message:sub(nlen + 1)
-		if message:len() < 1 then return end
+		local tnam = message:sub(2, nlen + 1)
+		message = message:sub(nlen + 2)
+
+		lastKnownReceiver[fnam] = {node, t + tuningExpectResponse, {}}
+		
 		onReceive(fnam, tnam, message)
 		if culib.hostname == tnam then return end
+
 		-- Redistribution of messages not aimed here
-		transmit(nil, message)
+		local lkr = lastKnownReceiver[tnam]
+		if lkr then
+			transmit(lkr[1], rawmessage)
+			table.insert(lkr[3], rawmessage)
+		else
+			transmit(nil, rawmessage)
+		end
 	end
+	local function encodeName(name)
+		if name:len() > 256 then error("Bad name (l>256)") end
+		if name == "" then error("No name") end
+		return string.char(name:len() - 1) .. name
+	end
+	culib.refresh = refresh
 	culib.output = function (fnam, tnam, message)
 		onReceive(fnam, tnam, message)
 		if tnam == culib.hostname then return end
-		transmit(nil, encodeName(fnam) .. encodeName(tnam) .. message)
+		local m = encodeName(fnam) .. encodeName(tnam) .. message
+		transmit(nil, m)
 	end
 	return culib
 end
