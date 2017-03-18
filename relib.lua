@@ -60,21 +60,22 @@ return function (hostname, transmit, onRReceive, time)
 		local port = data:byte(2) + (data:byte(1) * 256)
 		local tp = data:byte(7)
 		local globalId = data:sub(1, 5)
-		if tp == 0x00 then
-			onRReceive(nfrom, nto, port, data:sub(8), true)
-			return
-		end
-		if nto ~= node.hostname then return end
-		if (tp == 0x01) then
+		if (tp == 0x01) or (tp == 0x00) then
 			-- Only send one acknowledgement per packet,
 			-- but only receive the packet once.
 			-- (This is why timers are counted - to prevent the weAcked pool from getting too big.)
 			if not weAcked[nto .. globalId] then
-				onRReceive(nfrom, nto, port, data:sub(8), false)
+				onRReceive(nfrom, nto, port, data:sub(8), tp == 0x00)
+			else
+				killTimer(weAcked[nto .. globalId])
 			end
 			weAcked[nto .. globalId] = addTimer(function ()
 				weAcked[nto .. globalId] = nil
 			end, tuningClearAntiduplicate)
+
+			-- Check if this should actually be ACKed
+			if tp ~= 0x01 then return end
+			if nto ~= node.hostname then return end
 			node.output(nto, nfrom, data:sub(1, 6) .. "\x02")
 		end
 		if (tp == 0x02) and needsAck[nfrom .. globalId] then
@@ -114,8 +115,12 @@ return function (hostname, transmit, onRReceive, time)
 		onSucceed = onSucceed or (function () end)
 		onFailure = onFailure or (function () end)
 		local gid = genGlobalId(port)
+		local tp = "\x01"
+		-- Unreliable packets:
+		-- 1. Can't be ACKed (not in the needsAck table)
+		-- 2. Are otherwise subject to the same rules as regular packets
 		if unreliable then
-			node.output(node.hostname, nto, gid .. "\x00\x00" .. data)
+			tp = "\x00"
 			return
 		end
 		local na = {onSucceed}
@@ -124,13 +129,24 @@ return function (hostname, transmit, onRReceive, time)
 		doAttempt = function ()
 			attempt = attempt + 1
 			if attempt == tuningAttempts then
-				onFailure()
+				if not unreliable then
+					needsAck[nto .. gid] = nil
+					onFailure()
+				end
 				return
 			end
-			node.output(node.hostname, nto, gid .. string.char(attempt) .. "\x01" .. data)
+			node.output(node.hostname, nto, gid .. string.char(attempt) .. tp .. data)
 			na[2] = addTimer(doAttempt, tuningAttemptTime)
+			if not na[2] then
+				needsAck[nto .. gid] = nil
+				if not unreliable then
+					onFailure()
+				end
+			end
 		end
-		needsAck[nto .. gid] = na
+		if not unreliable then
+			needsAck[nto .. gid] = na
+		end
 		doAttempt()
 	end
 	return relib
