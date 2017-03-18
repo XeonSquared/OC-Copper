@@ -41,9 +41,10 @@ Should a situation be dire enough,
 --- The Broadcast Address
 
 The Broadcast Address is a possible feature which may or may not be actually used.
-For now it is not implemented.
+It has been implemented with forward compatibility by simply ensuring that "*" is never put into the 
+ routing cache (so it's always broadcast).
 The idea is that if a name is directly equal to "*", it should be broadcast around the local network.
-Notably, it is completely incompatible with reliability mechanisms,
+Notably, it is completely incompatible with reliability mechanisms for probably obvious reasons,
  but can still be used in networks running the Reliability Layer via the 'unreliable' escape-hatch.
 
 Hierarchial gateways do not need modification on the from-child rules

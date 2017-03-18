@@ -132,7 +132,9 @@ return function (hostname, transmit, onReceive, time)
 			return
 		end
 
-		lastKnownReceiver[fnam] = {node, t + tuningExpectContinue}
+		if fnam ~= "*" then
+			lastKnownReceiver[fnam] = {node, t + tuningExpectContinue}
+		end
 		
 		onReceive(fnam, tnam, message)
 		if culib.hostname == tnam then return end
