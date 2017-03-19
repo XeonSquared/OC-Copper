@@ -78,8 +78,8 @@ local function generateMessage()
 	nodes[na].output(nodenames[na], nodenames[nb], "T" .. tostring(math.random()))
 end
 
--- ~Once every 5 seconds, think a polling script
-local generateEvery = math.floor(50 / targetableCount)
+-- This is set so it should reuse the same pair every 10 seconds(?)
+local generateEvery = 1
 local generateCount = 10000
 while (generateCount > 0) or (#queuedCalls > 0) do
 	if (systime % generateEvery) == 0 then

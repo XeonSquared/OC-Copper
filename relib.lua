@@ -15,8 +15,8 @@ return function (hostname, transmit, onRReceive, time)
 	-- The maximum amount of timers (used to cap memory usage)
 	local tuningMaxTimers = 0x200
 	local tuningClearAntiduplicate = 60
-	local tuningAttempts = 8
-	local tuningAttemptTime = 4
+	local tuningAttempts = 12
+	local tuningAttemptTime = 2.5
 
 	-- Just an array, no special index.
 	-- Contents : {
