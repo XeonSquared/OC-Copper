@@ -121,7 +121,6 @@ return function (hostname, transmit, onRReceive, time)
 		-- 2. Are otherwise subject to the same rules as regular packets
 		if unreliable then
 			tp = "\x00"
-			return
 		end
 		local na = {onSucceed}
 		local attempt = -1
