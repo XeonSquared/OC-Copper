@@ -44,7 +44,9 @@ event.listen("modem_message", function (et, adto, adfrom, port, dist, magic, dat
   if et ~= "modem_message" then return end
   if port == 4957 then
     if magic == "copper" then
-      node.input(adfrom, data)
+      if type(data) == "string" then
+        node.input(adfrom, data)
+      end
     end
   end
 end)

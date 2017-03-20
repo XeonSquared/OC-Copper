@@ -86,19 +86,22 @@ end
 while true do
 	local e = {event.pull("modem_message")}
 	if e[1] == "modem_message" then
-		-- type, to, from, port, dist, data
+		-- type, to, from, port, dist, magic[6], data[7]
 		if ((e[2] == tunnel.address) or (e[4] == 4957)) then
-			local hops, nfrom, nto, data = cdlib.decode(e[6])
-			if data then
-				if e[2] == tunnel.address then
-					-- Pass it on as given.
-					modem.broadcast(4957, e[6])
-				elseif e[2] == modem.address then
-					-- Process it, then give to tunnel
-					if hops ~= 255 then
-						local tfrom, tto = checkLen(processFrom(nfrom)), checkLen(processTo(nto))
-						if tfrom and tto then
-							tunnel.send(cdlib.encode(hops + 1, tfrom, tto, data))
+			if e[6] == "copper" then
+				if type(e[7]) == "string" then
+					local hops, nfrom, nto, data = cdlib.decode(e[7])
+					if data then
+						if e[2] == tunnel.address then
+							-- Pass it on as given.
+							modem.broadcast(4957, "copper", e[7])
+						elseif e[2] == modem.address then
+							-- Process it, then give to tunnel
+							if hops ~= 255 then
+							local tfrom, tto = checkLen(processFrom(nfrom)), checkLen(processTo(nto))
+							if tfrom and tto then
+								tunnel.send("copper", cdlib.encode(hops + 1, tfrom, tto, data))
+							end
 						end
 					end
 				end
