@@ -1,15 +1,19 @@
 -- I, 20kdc, release this into the public domain.
 -- No warranty is provided, implied or otherwise.
 
--- 'Copper' networking test implementation.
+-- 'Copper' networking - "The Routing Library".
 -- This is meant as a portable (even into OC) library for networking.
 -- This 'outer function' is the instantiator.
 
 -- Note that it is probably possible to cause this code to run out of 
 --  memory in several hilarious ways.
+-- I've taken the approach that reduction of code .
 
 -- Interfaces have no meaning, since addresses are names.
 -- Which "side" a system is on is irrelevant.
+-- (Unless you're developing a hierarchial gateway, in which case this library isn't for you
+--   as it follows a default set of routing rules. Switch to cdlib for fine-grained control.)
+
 -- For sending, the following function is used:
 --  transmit(nodeId, message)
 -- The nodeId is a string or number that has been given via culib.input,
@@ -25,11 +29,20 @@
 -- "time" is a function which returns the real time, in seconds.
 -- It need not be precise.
 -- (This is used for caches.)
+
+local cdlib = require("cdlib")
+
 return function (hostname, transmit, onReceive, time)
 
 	-- How many packets need to be stored in seenBefore's keyspace
 	--  before 'panic' is the best response?
 	local tuningMaxSeenBeforeCountBeforeEmergencyFlush = 0x300
+
+	-- Prevents OOM by LKR cache flooding - how many entries can the LKR have, max?
+	-- (Though spamming packets from many sources is now a viable method for dropping LKR,
+	--  it used to be a viable OOM method.)
+	-- Note that setting this to 0 or less will effectively result in a value of 1.
+	local tuningMaxLKREntries = 0x400
 
 	-- Expect another packet after this amount of time,
 	--  or else clear the known receivers cache entry.
@@ -59,12 +72,8 @@ return function (hostname, transmit, onReceive, time)
 	--      expiry
 	-- }
 	local lastKnownReceiver = {}
-
-	local function encodeName(name)
-		if name:len() > 256 then error("Bad name (l>256)") end
-		if name == "" then error("No name") end
-		return string.char(name:len() - 1) .. name
-	end
+	-- How many LKR entries are there?
+	local lkrCacheCount = 0
 
 	local function refresh()
 		local t = time()
@@ -85,6 +94,21 @@ return function (hostname, transmit, onReceive, time)
 				--print("It was decided LKV[" .. k .. "] was out of date @ " .. v[2] .. " by " .. hostname)
 				lastKnownReceiver[k] = nil
 			end
+		end
+	end
+
+	-- Used to clean up LKR entries to prevent OOM.
+	local function removeOldestLKR()
+		local lowest = nil
+		local lowestExpiry = math.huge
+		for k, v in pairs(lastKnownReceiver) do
+			if v[2] < lowestExpiry then
+				lowest = k
+			end
+		end
+		if lowest then
+			lastKnownReceiver[lowest] = nil
+			lkrCacheCount = lkrCacheCount - 1
 		end
 	end
 
@@ -116,52 +140,56 @@ return function (hostname, transmit, onReceive, time)
 				seenBefore = {}
 			end
 		end
+
 		-- Begin parsing.
 
-		local rawmessage = message
+		local fnam, tnam, data = cdlib.decodeNoHops(message)
+		if not data then
+			return
+		end
 
-		if message:len() < 2 then return end
-		local nlen = message:byte(1) + 1
-		local fnam = message:sub(2, nlen + 1)
-		message = message:sub(nlen + 2)
-
-		if message:len() < 2 then return end
-		local nlen = message:byte(1) + 1
-		local tnam = message:sub(2, nlen + 1)
-		message = message:sub(nlen + 2)
-
-		if message:len() > tuningAutorejectLen then
+		if data:len() > tuningAutorejectLen then
 			return
 		end
 
 		if fnam ~= "*" then
+			if not lastKnownReceiver[fnam] then
+				-- if, not while, because if someone ignores my note above
+				-- and sets the tuning to 0 it would crash otherwise. *sigh*
+				if lkrCacheCount >= tuningMaxLKREntries then
+					removeOldestLKR()
+				end
+				lkrCacheCount = lkrCacheCount + 1
+			end
 			lastKnownReceiver[fnam] = {node, t + tuningExpectContinue}
 		end
 		
-		onReceive(fnam, tnam, message)
+		onReceive(fnam, tnam, data)
 		if culib.hostname == tnam then return end
 
 		-- Redistribution of messages not aimed here
 		if hops == 255 then
+			-- Don't redistribute
 			return
 		else
-			rawmessage = string.char(hops + 1) .. rawmessage
+			-- Prepend the hops byte that got removed earlier
+			message = string.char(hops + 1) .. message
 		end
 
 		local lkr = lastKnownReceiver[tnam]
 		if lkr then
 			culib.lkrCacheHits = culib.lkrCacheHits + 1
-			transmit(lkr[1], rawmessage)
+			transmit(lkr[1], message)
 		else
 			culib.lkrCacheMisses = culib.lkrCacheMisses + 1
-			transmit(nil, rawmessage)
+			transmit(nil, message)
 		end
 	end
 	culib.refresh = refresh
 	culib.output = function (fnam, tnam, message)
 		onReceive(fnam, tnam, message)
 		if tnam == culib.hostname then return end
-		local m = "\x00" .. encodeName(fnam) .. encodeName(tnam) .. message
+		local m = cdlib.encode(0, fnam, tnam, message)
 		transmit(nil, m)
 	end
 	return culib
