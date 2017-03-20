@@ -1,3 +1,6 @@
+-- I, 20kdc, release this into the public domain.
+-- No warranty is provided, implied or otherwise.
+
 -- OC/CU/RE Driver
 -- (Copper w/Reliability Layer on OpenComputers/OpenOS)
 -- I, 20kdc, release this into the public domain.

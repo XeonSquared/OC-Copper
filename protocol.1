@@ -9,16 +9,26 @@ They are simply base low-level Copper nodes with two interfaces and the
  For the FROM address:
 
 If it's on the parent side, reject if it's prefixed with hostname .. "/",
- otherwise prefix it with "<" and forward to child side.
+ otherwise prefix it with "<".
 If it's on the child side, reject if it's prefixed with "<",
- otherwise prefix it with hostname .. "/" and forward to parent side.
+ otherwise prefix it with hostname .. "/".
 
  For the TO address:
 
 If it's on the parent side, reject unless prefixed with hostname .. "/",
- otherwise remove that and forward to child side.
+ otherwise remove that.
 If it's on the child side, reject unless prefixed with "<",
- otherwise remove that and forward to parent side.
+ otherwise remove that.
+
+ For the packet's general routing:
+
+If it's on the parent side, run the rules above on the addresses,
+ and forward to child side if not rejected.
+If it's on the child side, run the rules above on the addresses,
+ and forward to parent side if not rejected.
+
+Notably, the hops field should be incremented as if going through a normal routing node -
+ this prevents system misconfiguration from causing a complete meltdown.
 
 This introduces a simple hierarchial structure that does not require any
  support code apart from in the nodes supporting the hierarchy.
