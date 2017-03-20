@@ -19,6 +19,7 @@ if package.loaded["occure"] then
   error("Already installed")
 end
 
+local culib = require("culib")
 local node = require("relib")(host, function (tgt, data)
   for _, v in ipairs(modems) do
     if tgt then
@@ -29,15 +30,16 @@ local node = require("relib")(host, function (tgt, data)
   end
 end, function (...)
   computer.pushSignal("copper_packet", ...)
-end, computer.uptime)
-
-package.loaded["occure"] = node
+end, computer.uptime, culib)
 
 for v, _ in component.list("modem") do
   local m = component.proxy(v)
   table.insert(modems, m)
   m.open(4957)
 end
+
+package.loaded["occure"] = node
+
 event.listen("modem_message", function (et, adto, adfrom, port, dist, magic, data)
   if et ~= "modem_message" then return end
   if port == 4957 then

@@ -4,16 +4,34 @@
 -- Copper Reliability Layer
 -- Notably, this should be instantiated rather than the normal Copper instance.
 
-local culib = require("culib")
+-- The Copper node constructor (which could be replaced with something else,
+--  should you decide to run the Reliability layer over another transport)
+--  is passed as function (hostname, transmit, onReceive, time),
+--  where hostname is the hostname given,
+--  transmit is the (target/nil (for broadcast), data) function as given,
+--  onReceive is the (nfrom. nto, ndata) function
+--   internal to the Reliability Layer to translate packets for onRReceive
+--   and acknowledge packets that need to be acknowledged,
+--  and time is the function-that-returns-current-time-in-seconds
+--   function as given.
+
+-- The resulting Copper-like node should have the following fields:
+-- node.hostname: Editable hostname.
+-- node.refresh(): Do various timed cleanup tasks.
+-- node.input(...): relib.input is set to this for convenience.
+--                  Ought to be function (opaqueFrom, data).
+-- node.output(nFrom, nTo, data): The normal Copper send function.
 
 -- onRReceive is now: (from, to, port, data, unreliablePacket)
--- where to can be anything for unreliable packets, but otherwise is the current hostname.
-return function (hostname, transmit, onRReceive, time)
+-- where to can be anything for unreliable packets,
+--  but otherwise is the current hostname.
+return function (hostname, transmit, onRReceive, time, culib)
 	-- node.hostname should be used for hostname generally.
 	local node
 
-	-- The maximum amount of timers (used to cap memory usage)
-	local tuningMaxTimers = 0x200
+	-- The maximum amount of timers (used to cap memory usage).
+	-- Assuming 16 bytes per key, this should be 64k.
+	local tuningMaxTimers = 0x400
 	local tuningClearAntiduplicate = 60
 	local tuningAttempts = 12
 	local tuningAttemptTime = 2.5
@@ -78,15 +96,19 @@ return function (hostname, transmit, onRReceive, time)
 			if nto ~= node.hostname then return end
 			node.output(nto, nfrom, data:sub(1, 6) .. "\x02")
 		end
+		-- Ignore ACKs for our packets that aren't going our way.
+		-- (Just a fringe case of packet ID reuse)
+		if nto ~= node.hostname then
+			return
+		end
 		if (tp == 0x02) and needsAck[nfrom .. globalId] then
 			needsAck[nfrom .. globalId][1](nfrom)
 			killTimer(needsAck[nfrom .. globalId][2])
 			needsAck[nfrom .. globalId] = nil
 		end
-		if nto ~= node.hostname then
-			return
-		end
 	end
+
+	-- Instantiate the node or lookalike.
 	node = culib(hostname, transmit, onReceive, time)
 
 	local relib = {}
