@@ -17,8 +17,13 @@ If it's on the child side, reject if it's prefixed with "<",
 
 If it's on the parent side, reject unless prefixed with hostname .. "/",
  otherwise remove that.
+ (Optionally, if the name is "*", bypass this rule completely.
+  This is not recommended, though, as this allows sending a "complete broadcast packet" via "[some amount of <]*".)
+
 If it's on the child side, reject unless prefixed with "<",
  otherwise remove that.
+ (Optionally, if the name is "<*", reject anyway.
+  This is a measure which you may or may not wish to take - if the above 'complete broadcast' possibility has been implemented, then it is a must.)
 
  For the packet's general routing:
 
