@@ -35,7 +35,9 @@ return {
 	end,
 	decode = function (d)
 		if d:len() < 3 then return end
-		return d:byte(1), decodeNoHops(d:sub(2))
+		local src, dst, data = decodeNoHops(d:sub(2))
+		if not data then return end
+		return d:byte(1), src, dst, data
 	end,
 	decodeNoHops = decodeNoHops
 }
