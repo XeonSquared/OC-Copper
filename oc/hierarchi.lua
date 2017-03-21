@@ -57,10 +57,10 @@ if outbound then
 		return "<" .. from
 	end
 	processTo = function (nto)
-		if from:sub(1, netname:len()) ~= netname then
+		if nto:sub(1, netname:len()) ~= netname then
 			return
 		end
-		return from:sub(netname:len() + 1)
+		return nto:sub(netname:len() + 1)
 	end
 else
 	processFrom = function (from)
@@ -70,14 +70,15 @@ else
 		return netname .. from
 	end
 	processTo = function (nto)
-		if from:sub(1, 1) ~= "<" then
+		if nto:sub(1, 1) ~= "<" then
 			return
 		end
-		return from:sub(2)
+		return nto:sub(2)
 	end
 end
 
 local function checkLen(s)
+	if not s then return end
 	if s:len() == 0 then return end
 	if s:len() > 256 then return end
 	return s
@@ -98,9 +99,10 @@ while true do
 						elseif e[2] == modem.address then
 							-- Process it, then give to tunnel
 							if hops ~= 255 then
-							local tfrom, tto = checkLen(processFrom(nfrom)), checkLen(processTo(nto))
-							if tfrom and tto then
-								tunnel.send("copper", cdlib.encode(hops + 1, tfrom, tto, data))
+								local tfrom, tto = checkLen(processFrom(nfrom)), checkLen(processTo(nto))
+								if tfrom and tto then
+									tunnel.send("copper", cdlib.encode(hops + 1, tfrom, tto, data))
+								end
 							end
 						end
 					end
