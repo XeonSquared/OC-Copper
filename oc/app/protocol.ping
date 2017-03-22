@@ -1,0 +1,11 @@
+The Copper Ping Protocol
+ - 20kdc, 2017
+
+The Ping protocol for Copper is very simple:
+
+For the server:
+Run a Reliability Layer node.
+
+For the client:
+Send a Reliability Layer packet to port 0, no data.
+The time from sending to acknowledgement is the ping.

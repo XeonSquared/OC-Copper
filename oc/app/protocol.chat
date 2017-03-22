@@ -1,0 +1,24 @@
+The chat.lua Protocol
+ - 20kdc, 2017
+
+The chat.lua protocol is a simple chat protocol built on Copper with the reliability layer in use.
+All packets/messages referred to here are Reliability Layer reliable packets.
+Note that this protocol, assuming no more than one connection between two peers has to be maintained at a time,
+ should be extremely versatile.
+However, IRC on TCP Emulation Over Copper should be the go-to standard when that becomes a thing.
+
+
+The server will receive messages on port 2 and send them back out on port 3.
+
+All messages received by the client from the server on port 3 should be displayed as-is.
+The client must ignore messages received on port 2, due to the possibility of a client and server on the same machine.
+
+The client should, every so often, send a blank string, to confirm the client is alive and wants to hear from the server.
+When sending a message, the client should send just the message text, with no annotation,
+ and should not display the message locally.
+The message, with modifications applied, will be returned by the server if all goes well.
+
+The server should keep a 'subscription pool' of all clients that have sent blank strings "recently".
+The server can implement the subscription pool - and it's definition of "recently" - however it likes,
+ though the standard should be to wait until at least 16 seconds after the last packet from the client.
+When the server sends a message, it sends an individual packet to each subscriber.

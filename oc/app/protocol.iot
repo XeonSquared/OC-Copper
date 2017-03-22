@@ -1,0 +1,63 @@
+The IoT Protocol
+ - 20kdc, 2017
+
+One of the core uses of Copper is network-connected small devices.
+These have a set list of requirements:
+1. The device itself can't be forced to do much in the way of work,
+    at least for simple cases.
+2. The protocol needs to be relatively flexible.
+
+The protocol is multi-part, each part noting a different aspect of the system.
+
+Part 1. General Mainport Packet Description
+
+The "Main port" is port 4.
+This port is the port via which most data exchange happens.
+
+First things first - in case of error, do nothing at all.
+If it's possible to just ignore a protocol violation, do so.
+For example, a get request with data should be treated as a get request without it.
+
+In all packets on the main port,
+ the first byte's upper 2 bits indicate what kind of packet this is -
+ the lower 6 bits is the 'variable number'.
+The remainder of the packet is the parameter data.
+
+00: Request: Get (This has no further data.)
+01: Request: Set (The data is the new variable contents.
+ Success is determined by checking acknowledgement, then performing a Get.)
+10: Perform Action: (The data is the parameter.)
+11: Response: Get (The data is the variable contents.)
+
+Part 2. Variable Types
+
+Variable types indicate to the program what values are expected in variables.
+Firstly, the upper bit being set indicates an Action - only the lower bits actually give the variable type-code.
+Secondly, if it's not an Action, the second-to-upper bit indicates if it can be set.
+
+They are, as follows:
+
+0: Void (Only useful for Actions. Think 'ignore anything out of here'.
+1: Human-Readable String (Generic string that a user could feasibly type. No special characters.)
+2: Boolean (Length > 0 means true, otherwise false. Odd definition, but also convenient.)
+3: Float (See Human-Readable String, but translated to a number by the device.)
+4: Descriptor (See Part 3.)
+
+Part 3. Discovery & Description
+
+Upon the receipt of any unreliable packet on port 1 that is addressed to "*" or the IoT device name,
+ it should send a packet back on port 4 formatted as a Get response packet for variable 0.
+
+Variable 0 is always the Descriptor, which describes the variables and actions available.
+
+The Descriptor is simply a list of variable types and 7-byte variable names,
+ starting from variable index 1 (as 0 is always the descriptor)
+It's recommended the variable names are in camel-case.
+
+Example descriptor for a networked lightbulb:
+
+"\x42lActive"
+
+Example descriptor for a networked turtle (Lua-escaped):
+
+"\x80turnLft\x80turnRgt\x80forward\x80backwrd\x02fwd!air"

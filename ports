@@ -1,0 +1,5 @@
+0: Ping
+1: 'IoT' Protocol: Discovery
+2: Chat (Client to Server)
+3: Chat (Server to Client)
+4: 'IoT' Protocol: Main
