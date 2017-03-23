@@ -40,6 +40,8 @@ The final header byte is the actual indicator of what is in the packet.
 0x00 indicates that this is an unreliable packet.
 0x01 indicates that this is a reliable packet, expecting acknowledgement.
 0x02 indicates that this is an acknowledgement for a reliable packet.
+Other packets should be ignored as far as information is concerned,
+ but as for routing-wise, not dropped.
 
 An example scenario will now be presented:
 

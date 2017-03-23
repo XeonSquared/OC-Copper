@@ -36,13 +36,13 @@ return function (hostname, transmit, onReceive, time)
 
 	-- How many packets need to be stored in seenBefore's keyspace
 	--  before 'panic' is the best response?
-	local tuningMaxSeenBeforeCountBeforeEmergencyFlush = 0x300
+	local tuningMaxSeenBeforeCountBeforeEmergencyFlush = 0x100
 
 	-- Prevents OOM by LKR cache flooding - how many entries can the LKR have, max?
 	-- (Though spamming packets from many sources is now a viable method for dropping LKR,
 	--  it used to be a viable OOM method.)
 	-- Note that setting this to 0 or less will effectively result in a value of 1.
-	local tuningMaxLKREntries = 0x400
+	local tuningMaxLKREntries = 0x200
 
 	-- Expect another packet after this amount of time,
 	--  or else clear the known receivers cache entry.

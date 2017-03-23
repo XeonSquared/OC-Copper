@@ -1,3 +1,5 @@
+-- I, 20kdc, release this into the public domain.
+-- No warranty is provided, implied or otherwise.
 -- Chat server.
 local occure = require("occure")
 local event = require("event")

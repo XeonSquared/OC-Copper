@@ -124,8 +124,7 @@ return function (hostname, transmit, onRReceive, time, culib)
 		local t = time()
 		while i <= #timers do
 			if timers[i][2] <= t then
-				timers[i][1]()
-				table.remove(timers, i)
+				table.remove(timers, i)[1]()
 			else
 				i = i + 1
 			end

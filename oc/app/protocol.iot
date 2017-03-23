@@ -45,7 +45,7 @@ They are, as follows:
 
 Part 3. Discovery & Description
 
-Upon the receipt of any unreliable packet on port 1 that is addressed to "*" or the IoT device name,
+Upon the receipt of any packet on port 1 that is addressed to "*" or the IoT device name,
  it should send a packet back on port 4 formatted as a Get response packet for variable 0.
 
 Variable 0 is always the Descriptor, which describes the variables and actions available.

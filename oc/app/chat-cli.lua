@@ -1,3 +1,5 @@
+-- I, 20kdc, release this into the public domain.
+-- No warranty is provided, implied or otherwise.
 -- Chat client
 local serv = ({...})[1]
 local event = require("event")

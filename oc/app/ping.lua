@@ -1,3 +1,5 @@
+-- I, 20kdc, release this into the public domain.
+-- No warranty is provided, implied or otherwise.
 local occure = require("occure")
 local computer = require("computer")
 local event = require("event")
