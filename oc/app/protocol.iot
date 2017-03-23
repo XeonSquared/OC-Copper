@@ -7,7 +7,13 @@ These have a set list of requirements:
     at least for simple cases.
 2. The protocol needs to be relatively flexible.
 
-The protocol is multi-part, each part noting a different aspect of the system.
+The protocol is written here as 3 parts.
+
+"The device" refers to the server / controllable object.
+"The client" refers to the client.
+
+Another thing to note is that due to the "cannot do much work" requirement,
+ only one device per hostname is supported via this protocol.
 
 Part 1. General Mainport Packet Description
 
@@ -18,16 +24,35 @@ First things first - in case of error, do nothing at all.
 If it's possible to just ignore a protocol violation, do so.
 For example, a get request with data should be treated as a get request without it.
 
+Secondly, it is allowed for the device to present different 'faces' depending on which client is accessing it.
+However, all 'faces' must have the same descriptor (variable 0).
+This is useful for devices which have some state, like a concurrent storage server
+ (allowing the download of different 1499-byte 'parts'),
+ but still keeping enough consistency for the device to be uniquely identifiable.
+
 In all packets on the main port,
  the first byte's upper 2 bits indicate what kind of packet this is -
  the lower 6 bits is the 'variable number'.
 The remainder of the packet is the parameter data.
 
-00: Request: Get (This has no further data.)
-01: Request: Set (The data is the new variable contents.
- Success is determined by checking acknowledgement, then performing a Get.)
-10: Perform Action: (The data is the parameter.)
-11: Response: Get (The data is the variable contents.)
+00: Request: Get. This has no further data.
+ This must only be sent by the client to the device.
+ If valid, the device responds with the standard reliability-layer acknowledgement,
+  and a Response: Get packet to the client.
+ If invalid, the device only responds with acknowledgement.
+
+01: Request: Set. The data is the new variable contents.
+ This must only be sent by the client to the device.
+ The device only responds with the standard reliability-layer acknowledgement.
+ Success is determined by checking acknowledgement, then performing a Get.
+
+10: Perform Action. The data is the parameter.
+ This must only be sent by the client to the device.
+ The device only responds with the standard reliability-layer acknowledgement.
+
+11: Response: Get. The data is the variable contents.
+ This must only be sent by the device to the client.
+ The client only responds with the standard reliability-layer acknowledgement.
 
 Part 2. Variable Types
 
