@@ -1,0 +1,99 @@
+-- I, 20kdc, release this into the public domain.
+-- No warranty is provided, implied or otherwise.
+
+-- 'Copper' networking implementation
+-- for EEPROM usage. Filters to hostname and broadcast for ease of use.
+
+-- Expects 'base'.
+
+-- Variables:
+-- R1 to R4: Tuning parameters in the order in the "big" version.
+-- RT: timers
+-- RA: weAcked
+-- RN: needsAck, but no success callback, so just the timer.
+
+-- Functions:
+-- RU: Current time.
+-- RP: Add timer.
+-- RK: Kill timer.
+-- RC: Message receive raw.
+-- RF: Refresh system.
+-- RG: Generate 1 random char (as a number)
+-- RS: Send message.
+
+R1,R2,R3,R4=0x40,60,12,2.5
+RT,RA,RN,RU={},{},{},computer.uptime
+function RP(f,x)
+	if#RT<R1 then
+		local t={f,RU()+x}
+		table.insert(RT,t)
+		return t
+	end
+end
+function RK(t)
+	for i=1,#RT do
+		if t==RT[i]then
+			table.remove(RT,i)
+		end
+	end
+end
+
+function RC(r,f,t,d)
+	if d and#d>=7then
+		-- Keep in mind the ID used by tables is (originalPacketToName..GID)
+		-- ',k' unspecified value "trick"
+		local p,b,g,k=d:byte(2)+(d:byte(1)*256),d:byte(7),d:sub(1,5)
+
+		if b==0x01or b==0x00then
+			k=t..g
+			if not RA[k] then
+				r(f,t,p,d:sub(8))
+			else
+				RK(RA[k])
+			end
+			RA[k]=RP(function()RA[k]=nil end,R2)
+			-- Only ACK under certain conditions.
+			if not(b~=0x01or t~=TH)then
+				TS(f,d:sub(1,6).."\x02")
+			end
+		end
+
+		k=f..g
+
+		if b==0x02 and RN[k]then
+			RK(RN[k])
+			RN[k]=nil
+		end
+	end
+end
+
+-- Refresh function to clean up & execute timers.
+function RF()
+	local i,t=1,RU()
+	while#RT>i do
+		if t>RT[i][2]then
+			table.remove(RT,i)[1]()
+		else
+			i=i+1
+		end
+	end
+end
+
+-- It is shorter to have this than not have it or localize it. *sigh*
+function RG()
+	return math.random(256)-1
+end
+
+function RS(t,p,d)
+	-- j,x unspecified. x is used in j.
+	local g,a,j,x=S.char(math.floor(p/256),p%256,RG(),RG(),RG()),-1
+	j=function()
+		a=a+1
+		x=nil
+		if a~=R3 then
+			TS(t,g..S.char(a,1)..d)
+			x=RP(j,R4)
+		end
+		RN[t..g]=x
+	end j()
+end

@@ -1,0 +1,41 @@
+-- I, 20kdc, release this into the public domain.
+-- No warranty is provided, implied or otherwise.
+
+-- 'Copper' networking implementation
+-- TINY EDITION (This node doesn't do routing.)
+-- for EEPROM usage.
+-- NOTE: space is considered "explicit", newline isn't. tab is always deleted.
+
+-- Variables:
+-- TH (hostname)
+-- TX (modem proxy)
+-- TC (the string "copper")
+-- S (short for 'string')
+-- C (short for 'component')
+
+-- Functions:
+-- TN: Decode Name
+-- TR: Receive Message handling (returns s/d/m rather than using a callback)
+-- TS: Send Message (notably, this has no 'from')
+-- TB: The TX.broadcast function
+
+TH,S,C,TC="hostname",string,component,"copper"
+TX=C.proxy(C.list("modem")())
+TX.open(4957)
+TB=TX.broadcast
+function TN(m)
+	if#m<2then return end
+	local n=m:byte(1)+2return m:sub(2,n),m:sub(n+1)
+end
+function TR(m)
+	local h,s,m,d=m:byte(),TN(m:sub(2))
+	if s then
+		d,m=TN(m)
+		if d then
+			return s,d,m
+		end
+	end
+end
+function TS(d,m)
+	TB(4957,TC,S.char(0,#TH-1)..TH..S.char(#d-1)..d..m)
+end

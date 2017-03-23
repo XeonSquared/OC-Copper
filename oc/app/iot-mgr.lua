@@ -2,7 +2,7 @@
 -- No warranty is provided, implied or otherwise.
 
 -- Controller for objects following the 'IoT protocol'
--- (see <soontobe> provided microcontroller source)
+-- (see provided microcontroller source for a lightweight OC implementation)
 
 local occure = require("occure")
 local event = require("event")
@@ -26,7 +26,7 @@ local function getHelper(tp, tfrom, tto, p, d, u)
 	if p == 4 then
 		if tto == occure.getHostname() then
 			if d:sub(1, 1) == packet(3, getTarg, "") then
-				print(d)
+				print(d:sub(2))
 				didGet = true
 			end
 		end
