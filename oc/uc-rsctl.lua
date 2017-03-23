@@ -1,5 +1,6 @@
-TH,S,C,TC="hostname",string,component,"copper"
-TX=C.proxy(C.list("modem")())TX.open(4957)TB=TX.broadcast
+S,C,TC=string,component,"copper"
+function CG(n)return C.proxy(C.list(n)())end
+TH,TX=CG("eeprom").getLabel(),CG("modem")TX.open(4957)TB=TX.broadcast
 function TN(m)if#m<2then return end
 local n=m:byte(1)+2return m:sub(2,n),m:sub(n+1)end
 function TR(m)local h,s,m,d=m:byte(),TN(m:sub(2))if s then
@@ -52,7 +53,7 @@ TS(t,g..S.char(a,1)..d)x=RP(j,R4)end
 RN[t..g]=x
 end j()end
 -- EXAMPLE IoT Redstone Top Controller --
-UR=C.proxy(C.list("redstone")())function UT(p)US=p
+UR=CG("redstone")function UT(p)US=p
 if#p>0then
 UR.setOutput(1,15)else
 UR.setOutput(1,0)end
@@ -61,7 +62,7 @@ UT("")function UG(t)RS(t,4,"\xC0\x42active.\x81setName")end
 N={[0]=UG,
 [1]=function(f)RS(f,4,"\xC1"..US)end,
 [0x41]=function(_,p)UT(p)end,
-[0x82]=function(_,p)if#p>0then TH=p end end,
+[0x82]=function(_,p)if#p>0then CG("eeprom").setLabel(p)TH=p end end,
 }
 function UI(f,t,p,d)local m=t==TH
 if p==1 and(t=="*"or m)then

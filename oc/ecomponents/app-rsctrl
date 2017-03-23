@@ -2,7 +2,7 @@
 -- No warranty is provided, implied or otherwise.
 %-- EXAMPLE IoT Redstone Top Controller --
 
-UR=C.proxy(C.list("redstone")())
+UR=CG("redstone")
 function UT(p)
 	US=p
 	if#p>0then
@@ -19,7 +19,7 @@ N={
 	[0]=UG,
 	[1]=function(f)RS(f,4,"\xC1"..US)end,
 	[0x41]=function(_,p)UT(p)end,
-	[0x82]=function(_,p)if#p>0then TH=p end end,
+	[0x82]=function(_,p)if#p>0then CG("eeprom").setLabel(p)TH=p end end,
 }
 function UI(f,t,p,d)
 	local m=t==TH

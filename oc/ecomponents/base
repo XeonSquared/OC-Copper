@@ -14,13 +14,15 @@
 -- C (short for 'component')
 
 -- Functions:
+-- CG: Get Component
 -- TN: Decode Name
 -- TR: Receive Message handling (returns s/d/m rather than using a callback)
 -- TS: Send Message (notably, this has no 'from')
 -- TB: The TX.broadcast function
 
-TH,S,C,TC="hostname",string,component,"copper"
-TX=C.proxy(C.list("modem")())
+S,C,TC=string,component,"copper"
+function CG(n)return C.proxy(C.list(n)())end
+TH,TX=CG("eeprom").getLabel(),CG("modem")
 TX.open(4957)
 TB=TX.broadcast
 function TN(m)
