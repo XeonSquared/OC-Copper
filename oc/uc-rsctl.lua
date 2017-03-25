@@ -53,7 +53,7 @@ TS(t,g..S.char(a,1)..d)x=RP(j,R4)end
 RN[t..g]=x
 end j()end
 -- EXAMPLE IoT Redstone Top Controller --
-UR=CG("redstone")function UT(p)if ({["true"]=0,["false"]=15})[p]then
+UR=CG("redstone")UM={["true"]=0,["false"]=15}function UT(p)if UM[p]then
 US=p
 UR.setOutput(1,UM[p])end
 end

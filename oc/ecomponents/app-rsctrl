@@ -3,8 +3,9 @@
 %-- EXAMPLE IoT Redstone Top Controller --
 
 UR=CG("redstone")
+UM={["true"]=0,["false"]=15}
 function UT(p)
-	if ({["true"]=0,["false"]=15})[p]then
+	if UM[p]then
 		US=p
 		UR.setOutput(1,UM[p])
 	end
