@@ -21,7 +21,7 @@ local otext = text
 local function pass()
 	text = text:gsub(".\n+.", function(i)
 		local l = i:sub(1, 1) .. i:sub(#i)
-		if not l:match("[^%(%)%{%}].") then
+		if not l:match("[^%(%)%{%}%,].") then
 			return l
 		end
 		return i:sub(1, 1) .. "\n" .. i:sub(#i)

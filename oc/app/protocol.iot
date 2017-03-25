@@ -64,7 +64,7 @@ They are, as follows:
 
 0: Void (Only useful for Actions. Think 'ignore anything out of here'.
 1: Human-Readable String (Generic string that a user could feasibly type. No special characters.)
-2: Boolean (Length > 0 means true, otherwise false. Odd definition, but also convenient.)
+2: Boolean ("false" means false, "true" means true, anything else is disallowed.)
 3: Float (See Human-Readable String, but translated to a number by the device.)
 4: Descriptor (See Part 3.)
 

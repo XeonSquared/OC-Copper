@@ -53,18 +53,12 @@ TS(t,g..S.char(a,1)..d)x=RP(j,R4)end
 RN[t..g]=x
 end j()end
 -- EXAMPLE IoT Redstone Top Controller --
-UR=CG("redstone")function UT(p)US=p
-if#p>0then
-UR.setOutput(1,15)else
-UR.setOutput(1,0)end
+UR=CG("redstone")function UT(p)if ({["true"]=0,["false"]=15})[p]then
+US=p
+UR.setOutput(1,UM[p])end
 end
-UT("")function UG(t)RS(t,4,"\xC0\x42active.\x81setName")end
-N={[0]=UG,
-[1]=function(f)RS(f,4,"\xC1"..US)end,
-[0x41]=function(_,p)UT(p)end,
-[0x82]=function(_,p)if#p>0then CG("eeprom").setLabel(p)TH=p end end,
-}
-function UI(f,t,p,d)local m=t==TH
+UT("false")function UG(t)RS(t,4,"\xC0\x42active.\x81setName")end
+N={[0]=UG,[1]=function(f)RS(f,4,"\xC1"..US)end,[0x41]=function(_,p)UT(p)end,[0x82]=function(_,p)if#p>0then CG("eeprom").setLabel(p)TH=p end end}function UI(f,t,p,d)local m=t==TH
 if p==1 and(t=="*"or m)then
 UG(f)end
 if p==4 and m then
