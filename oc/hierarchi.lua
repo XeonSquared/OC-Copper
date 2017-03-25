@@ -41,7 +41,7 @@ for a, _ in component.list("modem") do
 end
 
 inboundModem.open(4957)
-if not outboundModem then
+if not outboundModemAdr then
 	local tunnel = component.tunnel
 	-- Implement just enough of an outbound modem to be useful.
 	outboundModem = {
@@ -105,7 +105,7 @@ local function handlePacket(incoming, dat)
 	if not data then return end -- corrupt packet
 	if hops == 255 then return end
 
-	local tfrom, tto = checkLen(processFrom(nfrom)), checkLen(processTo(nto))
+	local tfrom, tto = checkLen(processFrom(incoming, nfrom)), checkLen(processTo(incoming, nto))
 	if tfrom and tto then
 		local resdata = cdlib.encode(hops + 1, tfrom, tto, data)
 		if incoming then
