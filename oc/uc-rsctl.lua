@@ -2,7 +2,8 @@ S,C,TC=string,component,"copper"
 function CG(n)return C.proxy(C.list(n)())end
 TH,TX=CG("eeprom").getLabel(),CG("modem")TX.open(4957)TB=TX.broadcast
 function TN(m)if#m<2then return end
-local n=m:byte(1)+2return m:sub(2,n),m:sub(n+1)end
+local n,t=m:byte(1)+2t=m:sub(n+1)if#t>=n then return m:sub(2,n),m:sub(n+1)end
+end
 function TR(m)local h,s,m,d=m:byte(),TN(m:sub(2))if s then
 d,m=TN(m)if d then
 return s,d,m

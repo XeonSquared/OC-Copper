@@ -18,6 +18,7 @@ local function decodeName(message)
 	if message:len() < 2 then return end
 	local nlen = message:byte(1) + 1
 	local fnam = message:sub(2, nlen + 1)
+	if fnam:len() < nlen then return end
 	return fnam, message:sub(nlen + 2)
 end
 
