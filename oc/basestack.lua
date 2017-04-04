@@ -49,20 +49,3 @@ if a~=R3 then
 TS(t,g..S.char(a,1)..d)x=RP(j,R4)end
 RN[t..g]=x
 end j()end
--- EXAMPLE IoT Redstone Top Controller --
-UR=CG("redstone")UM={["true"]=15,["false"]=0}function UT(p)if UM[p]then
-US=p
-UR.setOutput(1,UM[p])end
-end
-UT("false")function UG(t)RS(t,4,"\xC0\x42active.\x81setName")end
-N={[0]=UG,[1]=function(f)RS(f,4,"\xC1"..US)end,[0x41]=function(_,p)UT(p)end,[0x82]=function(_,p)if#p>0then CG("eeprom").setLabel(p)TH=p end end}function UI(f,t,p,d)local m=t==TH
-if p==1 and(t=="*"or m)then
-UG(f)end
-if p==4 and m then
-if N[d:byte(1)]then
-N[d:byte(1)](f,d:sub(2))end
-end
-end
-while true do local x={computer.pullSignal(1)}RF()if"modem_message"==x[1]and 4957==x[4]and TC==x[6]then
-RC(UI,TR(x[7]))end
-end

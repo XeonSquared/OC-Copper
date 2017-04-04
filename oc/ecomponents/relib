@@ -18,22 +18,36 @@
 -- RK: Kill timer.
 -- RC: Message receive raw.
 -- RF: Refresh system.
--- RG: Generate 1 random char (as a number)
+-- R: math.random
 -- RS: Send message.
 
 R1,R2,R3,R4=0x40,60,12,2.5
-RT,RA,RN,RU={},{},{},computer.uptime
-function RP(f,x)
+
+-- It is shorter to have this (R) than not have it or localize it. *sigh*
+
+RT,RA,RN,RU,R,X={},{},{},computer.uptime,math.random,255
+
+-- Add timer. Kill timer.
+-- Refresh function to clean up & execute timers.
+RP,RK,RF=function(f,x)
 	if#RT<R1 then
 		local t={f,RU()+x}
 		table.insert(RT,t)
 		return t
 	end
-end
-function RK(t)
+end,function(t)
 	for i=1,#RT do
 		if t==RT[i]then
 			table.remove(RT,i)
+		end
+	end
+end,function()
+	local i,t=1,RU()
+	while#RT>i do
+		if t>RT[i][2]then
+			table.remove(RT,i)[1]()
+		else
+			i=i+1
 		end
 	end
 end
@@ -42,7 +56,7 @@ function RC(r,f,t,d)
 	if d and#d>=7then
 		-- Keep in mind the ID used by tables is (originalPacketToName..GID)
 		-- ',k' unspecified value "trick"
-		local p,b,g,k=d:byte(2)+(d:byte(1)*256),d:byte(7),d:sub(1,5)
+		local p,b,g,k=d:byte(2)+(d:byte(1)*X),d:byte(7),d:sub(1,5)
 
 		if b==0x01or b==0x00then
 			k=t..g
@@ -67,26 +81,9 @@ function RC(r,f,t,d)
 	end
 end
 
--- Refresh function to clean up & execute timers.
-function RF()
-	local i,t=1,RU()
-	while#RT>i do
-		if t>RT[i][2]then
-			table.remove(RT,i)[1]()
-		else
-			i=i+1
-		end
-	end
-end
-
--- It is shorter to have this than not have it or localize it. *sigh*
-function RG()
-	return math.random(256)-1
-end
-
 function RS(t,p,d)
 	-- j,x unspecified. x is used in j.
-	local g,a,j,x=S.char(math.floor(p/256),p%256,RG(),RG(),RG()),-1
+	local g,a,j,x=S.char(p>>8,p%X,R(X)-1,R(X)-1,R(X)-1),-1
 	j=function()
 		a=a+1
 		x=nil
