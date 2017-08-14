@@ -1,4 +1,12 @@
 Each individual file has it's own license header.
 If no license header exists, the default is:
+
 I, 20kdc, release this into the public domain.
 No warranty is provided, implied or otherwise.
+
+License headers other than this are listed below with the specific files.
+
+oc/occure_rc.lua:
+    --[[
+    To the extent possible under law, Skye has waived all copyright and related or neighboring rights to this file. This file is published from: United Kingdom. 
+    --]]
