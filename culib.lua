@@ -55,7 +55,7 @@ return function (hostname, transmit, onReceive, time)
 	local tuningFlushLoopDetector = 60
 
 	-- Do not change this value unless protocol has changed accordingly.
-	local tuningAutorejectLen = 1506
+	local tuningAutorejectLen = 1507
 
 	local loopDetectorNext = time() + tuningFlushLoopDetector
 
@@ -187,6 +187,7 @@ return function (hostname, transmit, onReceive, time)
 	end
 	culib.refresh = refresh
 	culib.output = function (fnam, tnam, message)
+		if message:len() > tuningAutorejectLen then error("Attempted to send too long packet") end
 		onReceive(fnam, tnam, message)
 		if tnam == culib.hostname then return end
 		local m = cdlib.encode(0, fnam, tnam, message)
