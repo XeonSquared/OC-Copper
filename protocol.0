@@ -22,8 +22,10 @@ A name (as a length-minus-1-byte-prefixed-string),
  another name (in the same format),
  and the rest is data.
 
-Copper packet data may be up to 1506 bytes long -
- this does not include header data, which may be up to (256*2) + 3 bytes long.
+Copper packet data may be up to 1507 bytes long.
+ 1500 in-relib data bytes + 7 relib bytes.
+This makes the user's life easier by having an easy to remember MTU from within relib of 1500 bytes.
+This does not include header data, which may be up to (256*2) + 3 bytes long.
 
 Loop detection should performed by checking if a packet exactly the same has 
  been seen recently - other rejection, alteration and routing measures 
@@ -84,3 +86,8 @@ The connection between OpenComputers and Copper can be performed with a TCP gate
 
 It doesn't really matter how the data is transmitted here, since it's just a gateway.
 Possibly consider integrating a hierarchial gateway into the OpenComputers/world bridge.
+
+ERRATA:
+
+The data MTU was described as 1506 bytes due to an error in the protocol.2 document.
+It should be 1507 to fit 1500 relib byets and the 7-byte header.
