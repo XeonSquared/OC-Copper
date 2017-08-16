@@ -47,8 +47,8 @@ return function (hostname, transmit, onReceive, time)
 	-- Expect another packet after this amount of time,
 	--  or else clear the known receivers cache entry.
 	-- Minimum should be less or equal to tuningAttempts * 
-	--  tuningAttemptTime in relib.
-	local tuningExpectContinue = 15 + math.random(15)
+	--  tuningAttemptTime in relib. (Actually should be that /2 optimally. Adjusted accordingly.)
+	local tuningExpectContinue = 15
 
 	-- Flush the loop detector every so often.
 	-- This is not a complete clear.
