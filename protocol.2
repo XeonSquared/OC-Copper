@@ -23,7 +23,7 @@ Secondly, note that an application should be able to ask to be notified
  when a packet is received successfully or when the implementation gives up,
  with a flag indicating which is which.
 
-Reliability Layer packets have a simple 6-byte header.
+Reliability Layer packets have a simple 7-byte header.
 The first two bytes are the port number, in big-endian format.
 The next three bytes are a number to this application-side packet.
 They should be as random as possible.
@@ -58,3 +58,8 @@ Bob receives it successfully on the second time, and sends back a
  port    packetID   Attempt    PT
 
 Alice receives the response and does not send a third packet.
+
+ERRATA:
+
+When this document was originally posted, the relib header was described as 6 bytes despite a total of 7 bytes being specified.
+Thanks to @skyem123 for finding the issue.
