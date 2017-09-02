@@ -71,9 +71,9 @@ processFrom = function (incoming, from)
 		if from:sub(1, netname:len()) == netname then
 			return
 		end
-		return "<" .. from
+		return "^" .. from
 	else
-		if from:sub(1, 1) == "<" then
+		if from:sub(1, 1) == "^" then
 			return
 		end
 		return netname .. from
@@ -86,7 +86,7 @@ processTo = function (incoming, nto)
 		end
 		return nto:sub(netname:len() + 1)
 	else
-		if nto:sub(1, 1) ~= "<" then
+		if nto:sub(1, 1) ~= "^" then
 			return
 		end
 		return nto:sub(2)

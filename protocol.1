@@ -3,14 +3,17 @@ Copper Protocol :: Hierarchial Gateways
 
 "Hierarchial Gateways" are a system for ISP-like bodies to prevent their
  users from causing havoc.
+Note that this is not the only possible system, and implementors can do as they wish regarding addressing.
+(However, for this reason, applications should allow specification of a prefix to all "internet"-level addresses.)
+
 They are simply base low-level Copper nodes with two interfaces and the
  following rules:
 
  For the FROM address:
 
 If it's on the parent side, reject if it's prefixed with hostname .. "/",
- otherwise prefix it with "<".
-If it's on the child side, reject if it's prefixed with "<",
+ otherwise prefix it with "^".
+If it's on the child side, reject if it's prefixed with "^",
  otherwise prefix it with hostname .. "/".
 
  For the TO address:
@@ -18,11 +21,11 @@ If it's on the child side, reject if it's prefixed with "<",
 If it's on the parent side, reject unless prefixed with hostname .. "/",
  otherwise remove that.
  (Optionally, if the name is "*", bypass this rule completely.
-  This is not recommended, though, as this allows sending a "complete broadcast packet" via "[some amount of <]*".)
+  This is not recommended, though, as this allows sending a "complete broadcast packet" via "[some amount of ^]*".)
 
-If it's on the child side, reject unless prefixed with "<",
+If it's on the child side, reject unless prefixed with "^",
  otherwise remove that.
- (Optionally, if the name is "<*", reject anyway.
+ (Optionally, if the name is "^*", reject anyway.
   This is a measure which you may or may not wish to take - if the above 'complete broadcast' possibility has been implemented, then it is a must.)
 
  For the packet's general routing:
@@ -54,3 +57,10 @@ Possible uses of hierarchial gateways:
     following the same protocol as everything else in Copper,
     unlike certain competitors
 2. ISPs within servers, perhaps those using the hubs
+
+
+Errata:
+
+Previous versions of the spec used "<" - this was not very usable from most shells on most operating systems.
+It has been replaced with "^".
+It was not explicitly specified that this was not the only way of doing things - this has been corrected.

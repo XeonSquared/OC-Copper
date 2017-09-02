@@ -37,6 +37,10 @@ Combined with correctly-forgetting packet caches, this should prevent
 
 The final header byte is the actual indicator of what is in the packet.
 
+There are two sections of packet types:
+
+-- Basic Datagrams
+
 0x00 indicates that this is an unreliable packet.
 0x01 indicates that this is a reliable packet, expecting acknowledgement.
 0x02 indicates that this is an acknowledgement for a reliable packet.
@@ -59,7 +63,46 @@ Bob receives it successfully on the second time, and sends back a
 
 Alice receives the response and does not send a third packet.
 
+-- Connections
+
+0x03 : Request Connection Start
+This is similar to an 0x01 reliable packet expecting acknowledgement in how it is to be sent,
+ including the usual packetID randomization, and multiple attempts.
+However, the data must be two bytes, and these first two bytes must be the new port number.
+The port numbers that ought to be used for active connections are 0x8000 to 0xFFFF.
+The response must be on that port number.
+
+0x04 : Request Connection Start / Response
+This is sent on the port given by a Request Connection Start to accept the connection.
+It has the same format as 0x03 (new port number).
+This establishes the connection, and data transmission can begin.
+Connections die if no packets have been received by either side for at least 60 seconds.
+It is recommended the connection "ping" every 15 seconds.
+
+- The following packets have the current sequence number as their packetID.
+  This variable is per-connection-side, starts at 0,
+  and is incremented after a Connection Data packet
+   sent by that side.
+
+0x05 : Connection Data
+If 0 bytes, this serves as a ping (not a packet)
+The sender's sequence number is incremented by 1 before sending.
+The reply is a Connection Acknowledgement with the same sequence number (but no data)
+
+0x06 : Connection Resequencing
+Specifies that the next data packet's sequence number is going to be 0.
+(The packet has the current sequence number, to put it in context.)
+It is this in particular which requires connections keep:
+ 1. A map of sequence number -> data (flushed when data is read)
+ 2. A list of sequence numbers to read.
+When ready, a connection data acknowledgement should be given with sequence number 0.
+
+0x07 : Connection Data Acknowledgement
+Sent from the target of 0x05/0x06 to the sender. For 0x05, has the sequence number of the associated data.
+
 ERRATA:
 
 When this document was originally posted, the relib header was described as 6 bytes despite a total of 7 bytes being specified.
 Thanks to @skyem123 for finding the issue.
+
+The "Connections" section is a recent extension (August 28th 2017)

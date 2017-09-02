@@ -35,14 +35,17 @@ local function getpacket(s)
 	local l = getbyte(s)
 	if not l then error("framing bad") end
 	local sz = string.byte(l) + (string.byte(h) * 256)
-	if sz > 2021 then error("packet too large") end
+	if sz > 2022 then error("packet too large") end
 	local data = ""
 	for i = 1, sz do
 		local dbt = getbyte(s)
 		if not dbt then error("terminated early") end
 		data = data .. dbt
 	end
-	return cdlib.decode(data)
+	if data == "" then
+		return false
+	end
+	return true, cdlib.decode(data)
 end
 
 local function checkLen(name)
@@ -52,10 +55,10 @@ local function checkLen(name)
 end
 
 local function translateSend(hops, src, dst, data, srname, tgsock, tgname)
-	if src:sub(1, 1) == "<" then return end
-	if dst:sub(1, tgname:len() + 2) ~= "<" .. tgname .. "/" then return end
+	if src:sub(1, 1) == "^" then return end
+	if dst:sub(1, tgname:len() + 2) ~= "^" .. tgname .. "/" then return end
 	-- Ok, all rejection rules have been handled
-	src = "<" .. srname .. "/" .. src
+	src = "^" .. srname .. "/" .. src
 	dst = dst:sub(tgname:len() + 3)
 	src, dst = checkLen(src), checkLen(dst)
 	if src and dst then
@@ -82,19 +85,24 @@ local function messageroutine(tbl)
 	print("confirmed name " .. name)
 	tbl[3] = name
 	while true do
-		local hops, src, dst, data = getpacket(tbl[2])
-		if not data then
-			error("Bad Copper packet")
-		end
-		print("packet", src, dst)
-		if hops ~= 255 then
-			for _, v in ipairs(sockets) do
-				if v[3] then
-					if v ~= tbl then
-						translateSend(hops + 1, src, dst, data, name, v[2], v[3])
+		local rcv, hops, src, dst, data = getpacket(tbl[2])
+		if rcv then
+			if not data then
+				error("Bad Copper packet")
+			end
+			print("packet", src, dst)
+			if hops ~= 255 then
+				for _, v in ipairs(sockets) do
+					if v[3] then
+						if v ~= tbl then
+							translateSend(hops + 1, src, dst, data, name, v[2], v[3])
+						end
 					end
 				end
 			end
+		else
+			-- Ping response
+			tbl[2]:send("\x00\x00")
 		end
 	end
 end

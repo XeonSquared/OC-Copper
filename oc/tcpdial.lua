@@ -28,8 +28,8 @@ local function verify(d)
 	local hops, src, dst, data = cdlib.decode(d)
 	if not data then return end
 	-- Just a bit of filtering
-	if dst:sub(1, 1) ~= "<" then return end
-	if d:len() > 2021 then return end
+	if dst:sub(1, 1) ~= "^" then return end
+	if d:len() > 2022 then return end
 	return true
 end
 
@@ -55,9 +55,16 @@ local function readerRoutine()
 		for i = 1, sz do
 			dat = dat .. readByte()
 		end
-		md.broadcast(4957, "copper", dat)
+		if dat ~= "" then
+			md.broadcast(4957, "copper", dat)
+		end
 	end
 end
+
+event.timer(10, function ()
+	tcp:write("\x00\x00")
+	tcp:flush()
+end, math.huge)
 
 local primary = coroutine.create(readerRoutine)
 while true do
